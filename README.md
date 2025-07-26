@@ -41,14 +41,7 @@ AW_POC/
 │   │   └── core/             # Core utilities
 │   ├── requirements.txt      # Python dependencies
 │   └── README.md
-├── chatbot-component/         # Frontend component library
-│   ├── src/
-│   │   ├── components/       # React components
-│   │   ├── services/         # API services
-│   │   ├── types/            # TypeScript types
-│   │   └── utils/            # Utilities
-│   ├── package.json          # Node.js dependencies
-│   └── README.md
+
 ├── integration-examples/      # Integration examples
 │   ├── react-app-example/
 │   ├── vue-app-example/
@@ -95,28 +88,22 @@ AW_POC/
 
 ### Frontend Setup
 
-1. **Navigate to frontend directory:**
+The frontend is a simple HTML/JavaScript interface for testing:
+
+1. **Open the interface:**
 
    ```bash
-   cd chatbot-component
+   open chatbot-interface.html
    ```
 
-2. **Install dependencies:**
+2. **Or serve it with a local server:**
 
    ```bash
-   npm install
+   python -m http.server 3000
    ```
 
-3. **Build the component:**
-
-   ```bash
-   npm run build
-   ```
-
-4. **Start development:**
-   ```bash
-   npm run dev
-   ```
+3. **Access the interface:**
+   - URL: http://localhost:3000/chatbot-interface.html
 
 ## 🔧 Configuration
 
@@ -146,21 +133,22 @@ SERVICE_DEBUG=true
 
 ### Frontend Integration
 
-```jsx
-import { Chatbot } from "@your-org/chatbot-component";
+The project includes a simple HTML/JavaScript interface for testing:
 
-function App() {
-  return (
-    <Chatbot
-      apiEndpoint="http://localhost:8000"
-      apiKey="your-api-key"
-      theme="dark"
-      onMessageSent={(message) => console.log("Sent:", message)}
-      onMessageReceived={(message) => console.log("Received:", message)}
-      onError={(error) => console.error("Error:", error)}
-    />
-  );
-}
+```html
+<!-- chatbot-interface.html -->
+<script>
+  const apiEndpoint = "http://localhost:8000";
+
+  async function sendMessage(message) {
+    const response = await fetch(`${apiEndpoint}/api/v1/chat/send`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, profile: "default" }),
+    });
+    return response.json();
+  }
+</script>
 ```
 
 ## 🔌 API Endpoints
@@ -202,11 +190,7 @@ pytest --cov=app
 
 ### Frontend Tests
 
-```bash
-cd chatbot-component
-npm test
-npm run test:watch
-```
+The frontend is a simple HTML interface that can be tested manually by opening `chatbot-interface.html` in a browser.
 
 ## 🚀 Deployment
 
