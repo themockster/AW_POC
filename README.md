@@ -42,10 +42,8 @@ AW_POC/
 │   ├── requirements.txt      # Python dependencies
 │   └── README.md
 
-├── integration-examples/      # Integration examples
-│   ├── react-app-example/
-│   ├── vue-app-example/
-│   └── vanilla-js-example/
+├── chatbot-interface.html     # Frontend interface
+├── chatbot-demo.html          # Demo interface
 └── README.md
 ```
 
@@ -194,19 +192,29 @@ The frontend is a simple HTML interface that can be tested manually by opening `
 
 ## 🚀 Deployment
 
-### Docker Deployment
+### Local Development
 
-1. **Build backend image:**
+1. **Start AgentWatch:**
+
+   ```bash
+   cd agentwatch
+   npm install
+   npm run build
+   npm start
+   ```
+
+2. **Start Chatbot Service:**
 
    ```bash
    cd chatbot-service
-   docker build -t chatbot-service .
+   pip install -r requirements.txt
+   python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
    ```
 
-2. **Run with Docker Compose:**
-   ```bash
-   docker-compose up -d
-   ```
+3. **Start LM Studio:**
+   - Open LM Studio application
+   - Load a model
+   - Ensure it's running on port 1234
 
 ### Production Considerations
 
