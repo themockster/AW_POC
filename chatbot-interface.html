@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chatbot Interface</title>
+
+    <style>
+      /* --------- Design global --------- */
+      :root {
+        --primary-start: #667eea;
+        --primary-end: #764ba2;
+        --primary-gradient: linear-gradient(
+          135deg,
+          var(--primary-start),
+          var(--primary-end)
+        );
+        --bg-light: #f8f9fa;
+        --bg-dark: #1e1f26;
+        --text-dark: #333;
+        --text-light: #e4e4e4;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: "Inter", system-ui, sans-serif;
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        background: var(--bg-light);
+        color: var(--text-dark);
+      }
+
+      h2 {
+        margin-bottom: 1rem;
+      }
+
+      /* --------- Layout --------- */
+      .container {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+      }
+
+      .config-panel {
+        width: 350px;
+        border-right: 1px solid #e1e5e9;
+        padding: 20px;
+        overflow-y: auto;
+        background: #ffffff;
+      }
+
+      .chat-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #ffffff;
+      }
+
+      /* --------- Statut connexion --------- */
+      .status-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 1rem;
+      }
+
+      .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #d9534f; /* rouge défaut */
+      }
+
+      .status-indicator.connected {
+        background: #4caf50;
+      }
+
+      .status-indicator.disconnected {
+        background: #d9534f;
+      }
+
+      /* --------- Boutons & Formulaires --------- */
+      button {
+        cursor: pointer;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 16px;
+        font-weight: 600;
+        color: #fff;
+        background: var(--primary-gradient);
+      }
+
+      button.btn-secondary {
+        background: #6c757d;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 0.9rem;
+        font-weight: 600;
+      }
+
+      input[type="text"],
+      textarea {
+        width: 100%;
+        padding: 8px 10px;
+        border: 2px solid #e1e5e9;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        resize: vertical;
+      }
+
+      input[type="range"] {
+        width: 100%;
+      }
+
+      .form-group {
+        margin-bottom: 1rem;
+      }
+
+      /* --------- Sélecteur de profil --------- */
+      .profile-selector {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      .profile-option {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+        border-radius: 8px;
+        border: 2px solid #e1e5e9;
+        cursor: pointer;
+        transition: background 0.2s, border-color 0.2s;
+      }
+
+      .profile-option.selected {
+        border-color: var(--primary-start);
+        background: #eef0ff;
+      }
+
+      /* --------- Chat messages --------- */
+      .chat-header {
+        padding: 20px;
+        border-bottom: 1px solid #e1e5e9;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .chat-messages {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .message {
+        display: flex;
+        gap: 10px;
+      }
+
+      .message.user {
+        flex-direction: row-reverse;
+      }
+
+      .message-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: #fff;
+      }
+
+      .message.user .message-avatar {
+        background: var(--primary-gradient);
+      }
+
+      .message.assistant .message-avatar {
+        background: #4caf50;
+      }
+
+      .message-content {
+        background: var(--bg-light);
+        padding: 12px 16px;
+        border-radius: 12px;
+        max-width: 70%;
+        word-wrap: break-word;
+        white-space: pre-wrap;
+      }
+
+      .message.user .message-content {
+        background: var(--primary-gradient);
+        color: #fff;
+      }
+
+      .chat-input {
+        padding: 20px;
+        border-top: 1px solid #e1e5e9;
+        display: flex;
+        gap: 10px;
+      }
+
+      .chat-input input {
+        flex: 1;
+        padding: 12px;
+        border: 2px solid #e1e5e9;
+        border-radius: 8px;
+        font-size: 14px;
+      }
+
+      .typing-indicator {
+        display: none;
+        padding: 12px 16px;
+        background: var(--bg-light);
+        border-radius: 12px;
+        color: #666;
+        font-style: italic;
+      }
+
+      .typing-indicator.show {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- ========== PANNEAU CONFIGURATION ========== -->
+      <div class="config-panel">
+        <h2>⚙️ Configuration</h2>
+        <div class="status-wrapper">
+          <div id="statusIndicator" class="status-indicator disconnected"></div>
+          <span id="statusText">Déconnecté</span>
+          <button id="testConnectionBtn" style="margin-left: auto">
+            Tester la connexion
+          </button>
+        </div>
+
+        <!-- Endpoint -->
+        <div class="form-group">
+          <label for="apiEndpoint">Endpoint Chatbot Service</label>
+          <input type="text" id="apiEndpoint" value="http://localhost:8000" />
+        </div>
+
+        <!-- Profils -->
+        <div class="config-section">
+          <h3>👤 Profil de Chat</h3>
+          <div class="profile-selector">
+            <div class="profile-option selected" data-profile="default">
+              Profil par défaut
+            </div>
+            <div class="profile-option" data-profile="assistant">
+              Assistant IA
+            </div>
+            <div class="profile-option" data-profile="expert">
+              Expert technique
+            </div>
+          </div>
+        </div>
+
+        <!-- Personnalisation -->
+        <div class="config-section">
+          <h3>🎨 Personnalisation</h3>
+          <div class="form-group">
+            <label for="systemPrompt">Prompt système</label>
+            <textarea id="systemPrompt" rows="4">
+Vous êtes un assistant IA utile et amical. Répondez de manière claire et concise.</textarea
+            >
+          </div>
+          <div class="form-group">
+            <label for="maxTokens">Tokens maximum</label>
+            <input type="text" id="maxTokens" value="1000" />
+          </div>
+          <div class="form-group">
+            <label for="temperature"
+              >Température <span id="tempValue">0.7</span></label
+            >
+            <input
+              type="range"
+              id="temperature"
+              min="0"
+              max="2"
+              step="0.1"
+              value="0.7"
+            />
+          </div>
+        </div>
+
+        <!-- Statistiques -->
+        <div class="config-section">
+          <h3>📊 Statistiques</h3>
+          <p>Messages envoyés: <span id="messagesSent">0</span></p>
+          <p>Messages reçus: <span id="messagesReceived">0</span></p>
+          <p>Temps réponse moyen: <span id="avgResponseTime">0ms</span></p>
+        </div>
+      </div>
+
+      <!-- ========== PANNEAU CHAT ========== -->
+      <div class="chat-panel">
+        <div class="chat-header">
+          <h3>💬 Conversation</h3>
+          <button class="btn-secondary" id="clearBtn">
+            Effacer l'historique
+          </button>
+        </div>
+
+        <div id="chatMessages" class="chat-messages">
+          <div class="message assistant">
+            <div class="message-avatar">AI</div>
+            <div class="message-content">
+              Bonjour ! Je suis votre assistant IA. Comment puis-je vous aider
+              aujourd'hui ?
+            </div>
+          </div>
+        </div>
+
+        <div id="typingIndicator" class="typing-indicator">
+          L'assistant est en train de taper...
+        </div>
+
+        <div class="chat-input">
+          <input
+            id="messageInput"
+            type="text"
+            placeholder="Tapez votre message..."
+          />
+          <button id="sendBtn">Envoyer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== SCRIPT ========== -->
+    <script>
+      // ------------------------- Configuration -------------------------
+      let config = {
+        apiEndpoint: "http://localhost:8000",
+        currentProfile: "default",
+        systemPrompt:
+          "Vous êtes un assistant IA utile et amical. Répondez de manière claire et concise.",
+        maxTokens: 1000,
+        temperature: 0.7,
+        stats: {
+          messagesSent: 0,
+          messagesReceived: 0,
+          responseTimes: [],
+        },
+      };
+
+      // Profils prédéfinis
+      const chatProfiles = {
+        default: {
+          name: "Profil par défaut",
+          systemPrompt:
+            "Vous êtes un assistant IA utile et amical. Répondez de manière claire et concise.",
+          temperature: 0.7,
+          maxTokens: 1000,
+        },
+        assistant: {
+          name: "Assistant IA",
+          systemPrompt:
+            "Vous êtes un assistant IA spécialisé dans l'aide et le support. Vous répondez de manière professionnelle et détaillée, en fournissant des explications claires et des solutions pratiques.",
+          temperature: 0.6,
+          maxTokens: 1200,
+        },
+        expert: {
+          name: "Expert technique",
+          systemPrompt:
+            "Vous êtes un expert technique hautement qualifié. Vous répondez avec précision technique, utilisez un vocabulaire spécialisé approprié, et fournissez des analyses approfondies et des solutions techniques détaillées.",
+          temperature: 0.4,
+          maxTokens: 1500,
+        },
+      };
+
+      // ------------------------- Sélecteurs DOM -------------------------
+      const statusIndicator = document.getElementById("statusIndicator");
+      const statusText = document.getElementById("statusText");
+      const testConnectionBtn = document.getElementById("testConnectionBtn");
+      const apiEndpointInput = document.getElementById("apiEndpoint");
+      const systemPromptInput = document.getElementById("systemPrompt");
+      const maxTokensInput = document.getElementById("maxTokens");
+      const temperatureRange = document.getElementById("temperature");
+      const tempValue = document.getElementById("tempValue");
+
+      const chatMessages = document.getElementById("chatMessages");
+      const messageInput = document.getElementById("messageInput");
+      const sendBtn = document.getElementById("sendBtn");
+      const typingIndicator = document.getElementById("typingIndicator");
+      const clearBtn = document.getElementById("clearBtn");
+
+      // ------------------------- Utils -------------------------
+      function updateStatus(text, type) {
+        statusText.textContent = text;
+        statusIndicator.classList.remove("connected", "disconnected");
+        statusIndicator.classList.add(type);
+      }
+
+      function appendMessage(role, content) {
+        const msgWrapper = document.createElement("div");
+        msgWrapper.classList.add("message", role);
+
+        const avatar = document.createElement("div");
+        avatar.classList.add("message-avatar");
+        avatar.textContent = role === "user" ? "Vous" : "AI";
+
+        const msgContent = document.createElement("div");
+        msgContent.classList.add("message-content");
+        msgContent.textContent = content;
+
+        msgWrapper.appendChild(avatar);
+        msgWrapper.appendChild(msgContent);
+        chatMessages.appendChild(msgWrapper);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+
+      function updateStats() {
+        document.getElementById("messagesSent").textContent =
+          config.stats.messagesSent;
+        document.getElementById("messagesReceived").textContent =
+          config.stats.messagesReceived;
+        const avg =
+          config.stats.responseTimes.reduce((a, b) => a + b, 0) /
+          (config.stats.responseTimes.length || 1);
+        document.getElementById("avgResponseTime").textContent = `${Math.round(
+          avg
+        )}ms`;
+      }
+
+      // ------------------------- Profil -------------------------
+      function updateProfileConfig(profileKey) {
+        const profile = chatProfiles[profileKey];
+        if (profile) {
+          config.currentProfile = profileKey;
+          config.systemPrompt = profile.systemPrompt;
+          config.temperature = profile.temperature;
+          config.maxTokens = profile.maxTokens;
+
+          // MAJ UI
+          systemPromptInput.value = profile.systemPrompt;
+          maxTokensInput.value = profile.maxTokens;
+          temperatureRange.value = profile.temperature;
+          tempValue.textContent = profile.temperature;
+
+          // Visuel sélection
+          document
+            .querySelectorAll(".profile-option")
+            .forEach((opt) => opt.classList.remove("selected"));
+          document
+            .querySelector(`.profile-option[data-profile="${profileKey}"]`)
+            .classList.add("selected");
+        }
+      }
+
+      // ------------------------- Connection Test -------------------------
+      async function testConnection() {
+        try {
+          const res = await fetch(`${config.apiEndpoint}/api/v1/health`);
+          if (res.ok) {
+            updateStatus("Connecté au Chatbot Service", "connected");
+          } else {
+            updateStatus("Erreur de connexion", "disconnected");
+          }
+        } catch (err) {
+          updateStatus("Impossible de se connecter", "disconnected");
+          console.error(err);
+        }
+      }
+
+      // ------------------------- Envoi / Réception -------------------------
+      async function sendMessage() {
+        const message = messageInput.value.trim();
+        if (!message) return;
+
+        appendMessage("user", message);
+        messageInput.value = "";
+        config.stats.messagesSent++;
+        updateStats();
+
+        typingIndicator.classList.add("show");
+        const start = Date.now();
+        try {
+          const response = await fetch(
+            `${config.apiEndpoint}/api/v1/chat/send`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                message: message,
+                profile: config.currentProfile,
+                system_prompt: config.systemPrompt,
+                max_tokens: config.maxTokens,
+                temperature: config.temperature,
+              }),
+            }
+          );
+
+          const data = await response.json();
+          const assistantMsg = data.response || "(Pas de réponse)";
+          appendMessage("assistant", assistantMsg);
+
+          config.stats.messagesReceived++;
+          config.stats.responseTimes.push(Date.now() - start);
+          updateStats();
+        } catch (err) {
+          console.error(err);
+          appendMessage(
+            "assistant",
+            "Erreur: impossible d'obtenir une réponse."
+          );
+        } finally {
+          typingIndicator.classList.remove("show");
+        }
+      }
+
+      function clearChat() {
+        chatMessages.innerHTML = "";
+      }
+
+      // ------------------------- Events -------------------------
+      window.addEventListener("DOMContentLoaded", () => {
+        testConnection();
+
+        // Profils click
+        document.querySelectorAll(".profile-option").forEach((opt) => {
+          opt.addEventListener("click", () =>
+            updateProfileConfig(opt.dataset.profile)
+          );
+        });
+
+        // Inputs
+        apiEndpointInput.addEventListener("change", (e) => {
+          config.apiEndpoint = e.target.value;
+        });
+        systemPromptInput.addEventListener("change", (e) => {
+          config.systemPrompt = e.target.value;
+        });
+        maxTokensInput.addEventListener("change", (e) => {
+          config.maxTokens = parseInt(e.target.value) || 1000;
+        });
+        temperatureRange.addEventListener("input", (e) => {
+          config.temperature = parseFloat(e.target.value);
+          tempValue.textContent = e.target.value;
+        });
+
+        testConnectionBtn.addEventListener("click", testConnection);
+        sendBtn.addEventListener("click", sendMessage);
+        messageInput.addEventListener("keypress", (e) => {
+          if (e.key === "Enter") sendMessage();
+        });
+        clearBtn.addEventListener("click", clearChat);
+      });
+    </script>
+  </body>
+</html>

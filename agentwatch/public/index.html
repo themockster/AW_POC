@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AgentWatch - AI Agent Monitoring Dashboard</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <div class="app">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-content">
+          <div class="logo">
+            <i class="fas fa-eye"></i>
+            <h1>AgentWatch</h1>
+          </div>
+          <nav class="nav-tabs">
+            <button class="nav-tab active" data-tab="dashboard">
+              <i class="fas fa-chart-line"></i>
+              Dashboard
+            </button>
+            <button class="nav-tab" data-tab="configuration">
+              <i class="fas fa-cog"></i>
+              Configuration
+            </button>
+            <button class="nav-tab" data-tab="sessions">
+              <i class="fas fa-comments"></i>
+              Sessions
+            </button>
+          </nav>
+          <div class="header-actions">
+            <button id="refreshBtn" class="btn btn-primary">
+              <i class="fas fa-sync-alt"></i>
+              Refresh
+            </button>
+            <div class="status-indicator" id="statusIndicator">
+              <span class="status-dot"></span>
+              <span class="status-text">Connecting...</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <!-- Dashboard Tab -->
+        <div id="dashboard-tab" class="tab-content active">
+          <!-- Dashboard Overview -->
+          <section class="dashboard-overview">
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-icon">
+                  <i class="fas fa-comments"></i>
+                </div>
+                <div class="stat-content">
+                  <h3 id="totalEvents">0</h3>
+                  <p>Total Events</p>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">
+                  <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-content">
+                  <h3 id="totalUsers">0</h3>
+                  <p>Active Users</p>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">
+                  <i class="fas fa-layer-group"></i>
+                </div>
+                <div class="stat-content">
+                  <h3 id="totalSessions">0</h3>
+                  <p>Total Sessions</p>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">
+                  <i class="fas fa-tokens"></i>
+                </div>
+                <div class="stat-content">
+                  <h3 id="totalTokens">0</h3>
+                  <p>Tokens Used</p>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">
+                  <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="stat-content">
+                  <h3 id="totalCost">$0.00</h3>
+                  <p>Total Cost</p>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">
+                  <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-content">
+                  <h3 id="avgResponseTime">0ms</h3>
+                  <p>Avg Response Time</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Charts Section -->
+          <section class="charts-section">
+            <div class="chart-container">
+              <h3>Events Over Time</h3>
+              <canvas id="eventsChart"></canvas>
+            </div>
+            <div class="chart-container">
+              <h3>Token Usage</h3>
+              <canvas id="tokensChart"></canvas>
+            </div>
+          </section>
+
+          <!-- Real-time Events -->
+          <section class="realtime-events">
+            <h3>Real-time Events</h3>
+            <div class="events-list" id="eventsList">
+              <!-- Events will be populated here -->
+            </div>
+          </section>
+        </div>
+
+        <!-- Configuration Tab -->
+        <div id="configuration-tab" class="tab-content">
+          <section class="configuration-section">
+            <div class="config-header">
+              <h2>Chatbot Configuration</h2>
+              <button id="addChatbotBtn" class="btn btn-primary">
+                <i class="fas fa-plus"></i>
+                Add Chatbot
+              </button>
+            </div>
+
+            <!-- Chatbot List -->
+            <div class="chatbot-list" id="chatbotList">
+              <!-- Chatbots will be populated here -->
+            </div>
+
+            <!-- Add/Edit Chatbot Modal -->
+            <div id="chatbotModal" class="modal">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h3 id="modalTitle">Add New Chatbot</h3>
+                  <button class="modal-close" id="closeModal">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+                <form id="chatbotForm">
+                  <div class="form-group">
+                    <label for="chatbotName">Name *</label>
+                    <input type="text" id="chatbotName" name="name" required />
+                  </div>
+                  <div class="form-group">
+                    <label for="chatbotDescription">Description</label>
+                    <textarea
+                      id="chatbotDescription"
+                      name="description"
+                      rows="3"
+                    ></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label for="lmStudioUrl">LM Studio URL *</label>
+                    <input
+                      type="url"
+                      id="lmStudioUrl"
+                      name="lmStudioUrl"
+                      placeholder="http://localhost:1234"
+                      required
+                    />
+                  </div>
+                  <div class="form-group">
+                    <label class="checkbox-label">
+                      <input
+                        type="checkbox"
+                        id="isActive"
+                        name="isActive"
+                        checked
+                      />
+                      <span class="checkmark"></span>
+                      Active
+                    </label>
+                  </div>
+                  <div class="form-actions">
+                    <button
+                      type="button"
+                      class="btn btn-secondary"
+                      id="cancelBtn"
+                    >
+                      Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Sessions Tab -->
+        <div id="sessions-tab" class="tab-content">
+          <section class="sessions-section">
+            <h2>Chat Sessions</h2>
+            <div class="sessions-list" id="sessionsList">
+              <!-- Sessions will be populated here -->
+            </div>
+
+            <!-- Session Detail Modal -->
+            <div id="sessionModal" class="modal">
+              <div class="modal-content modal-large">
+                <div class="modal-header">
+                  <h3 id="sessionModalTitle">Session Details</h3>
+                  <button class="modal-close" id="closeSessionModal">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+                <div class="session-detail" id="sessionDetail">
+                  <!-- Session details will be populated here -->
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
